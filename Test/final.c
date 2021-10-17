@@ -1,12 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
+ #include <stdio.h>
 
 // before using Using dynamic memory (malloc) for matrix A and matrix B
 void main()
 {
     FILE *file, *fileStore = NULL;
     int row, col; // to use in loops
-    int rows1, cols1, rows2, cols2;
+    int rows1, cols1, rows2, cols2; 
     double matval = 0.0;
 
     file = fopen("SampleMatricesWithErrors.txt", "r");
@@ -15,15 +14,8 @@ void main()
 
     while (fscanf(file, "%d,%d", &rows1, &cols1) != EOF)
     {
-        // for dynamic allocation of matrix A
-        // double A[rows1][cols1];
-        double *A[rows1];
-        for (int i = 0; i < rows1; i++)
-        {
-            A[i] = malloc(cols1 * sizeof(double *));
-        }
-
         // To store first matrix A
+        double A[rows1][cols1];
         for (row = 0; row < rows1; row++)
         {
             for (col = 0; col < cols1; col++)
@@ -33,15 +25,9 @@ void main()
             }
         }
 
-        // for dynamic allocation of matrix B
-        fscanf(file, "%d,%d", &rows2, &cols2);
-        double *B[rows2];
-        for (int i = 0; i < rows2; i++)
-        {
-            B[i] = malloc(cols2 * sizeof(double *));
-        }
-
         // To store second matrix B
+        fscanf(file, "%d,%d", &rows2, &cols2);
+        double B[rows2][cols2];
         for (row = 0; row < rows2; row++)
         {
             for (col = 0; col < cols2; col++)
