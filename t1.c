@@ -1,5 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+
+void *mult(void *arg)
+{
+    double *data = (double *)arg;
+    double k = 0;
+    int i = 0;
+
+    int x = data[0];
+    for (i = 1; i <= x; i++)
+    {
+        k += data[i] * data[i + x];
+    }
+    double *p = (double *)malloc(sizeof(double));
+    *p = k;
+
+    pthread_exit(p);
+}
 
 void main()
 {
@@ -8,8 +26,8 @@ void main()
     int rows1, cols1, rows2, cols2;
     double matval = 0.0;
 
-    file = fopen("SampleMatricesWithErrors.txt", "r");
-    //file = fopen("new.txt", "r");
+    //file = fopen("SampleMatricesWithErrors.txt", "r");
+    file = fopen("z_new.txt", "r");
     fileStore = fopen("z_matrixresults2049699.txt", "w");
 
     while (fscanf(file, "%d,%d", &rows1, &cols1) != EOF)
@@ -51,25 +69,66 @@ void main()
             continue;
         }
 
-        // To store matrix multiplication C
-        fprintf(fileStore, "Result Matrix: %d,%d\n", rows1, cols2);
+        int n = 2;
+
+        pthread_t threads[n];
+        double *data = NULL;
+        int k;
+        int count = 0;
+
+        // To store and perform matrix multiplication C
+        fprintf(fileStore, "Resultant Matrix: %d,%d\n", rows1, cols2);
         double C[rows1][cols2];
         for (row = 0; row < rows1; row++)
         {
             for (col = 0; col < cols2; col++)
             {
-                // To initialize = 0.0 first in all of matrix multiplication array
-                C[row][col] = 0.0;
-                // here cols1 or rows2 both can do the task coz they are same.
-                for (int k = 0; k < cols1; k++)
+                // keeping 1st mat row and 2nd mat column
+                // (cols1 * row2 +1) OR (cols1 * 2 +1) same
+                data = malloc((cols1 * 2 + 1) * sizeof(double));
+                data[0] = cols1;
+
+                for (k = 0; k < cols1; k++)
                 {
-                    C[row][col] += A[row][k] * B[k][col];
+                    data[k + 1] = A[row][k];
                 }
-                fprintf(fileStore, "%lf\t", C[row][col]);
+                for (k = 0; k < rows2; k++)
+                {
+                    data[k + cols1 + 1] = B[k][col];
+                }
+
+                if (count < n)
+                {
+                    pthread_create(&threads[count], NULL, mult, (void *)(data));
+                    count++;
+                }
+
+                if (count == n || col == cols2 - 1)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        void *k;
+
+                        pthread_join(threads[i], &k);
+                        double *p = (double *)k;
+                        fprintf(fileStore, "%lf\t", *p);
+                    }
+                    count = 0;
+                }
+
+                // // To initialize = 0.0 first in all of matrix multiplication array
+                // C[row][col] = 0.0;
+                // // here cols1 or rows2 both can do the task coz they are same.
+                // for (int k = 0; k < cols1; k++)
+                // {
+                //     C[row][col] += A[row][k] * B[k][col];
+                // }
+                // fprintf(fileStore, "%lf\t", C[row][col]);
             }
             fprintf(fileStore, "\n");
         }
         fprintf(fileStore, "\n");
+        break;
     }
     printf("Done.\n");
     fclose(file);

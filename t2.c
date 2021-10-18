@@ -49,6 +49,7 @@ int main()
             printf("%d ", matA[i][j]);
         printf("\n");
     }
+    printf("\n");
 
     // Displaying matB
     for (i = 0; i < r2; i++)
@@ -85,7 +86,7 @@ int main()
                            mult, (void *)(data));
         }
 
-    printf("RESULTANT MATRIX IS :- \n");
+    printf("\nRESULTANT MATRIX IS :- \n");
     for (i = 0; i < max; i++)
     {
         void *k;
