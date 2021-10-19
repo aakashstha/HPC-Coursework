@@ -6,6 +6,13 @@ FILE *file, *fileStore = NULL;
 int row, col;                   // to use in loops
 int rows1, cols1, rows2, cols2; // to store rows and columns of matrix A & B
 int threadCount;
+char *filename[5] = {
+    "Data/SampleMatricesWithErrors.txt",
+    "Data/SampleMatricesWithErrors2.txt",
+    "Data/SampleMatricesWithErrors3.txt",
+    "Data/SampleMatricesWithErrors4.txt",
+    "Data/SampleMatricesWithErrors5.txt",
+};
 
 // all the available function down below
 void *calculateMatrix(void *arg);
@@ -30,50 +37,50 @@ void main(int argc, char **argv)
 // To read matrix A and B from the file.
 void readMatrix()
 {
-
-    file = fopen("Data/SampleMatricesWithErrors.txt", "r");
-    if (file != NULL)
-        fileStore = fopen("matrixresults2049699.txt", "w");
-
-    double matval = 0.0;
-    while (fscanf(file, "%d,%d", &rows1, &cols1) != EOF)
+    fileStore = fopen("matrixresults2049699.txt", "w");
+    for (int i = 0; i < 5; i++)
     {
-        // To store first matrix A
-        double *A[rows1];
-        for (row = 0; row < rows1; row++)
+        file = fopen(filename[i], "r");
+        double matval = 0.0;
+        while (fscanf(file, "%d,%d", &rows1, &cols1) != EOF)
         {
-            // to dynamically allocate memory
-            A[row] = malloc(cols1 * sizeof(double *));
-            for (col = 0; col < cols1; col++)
+            // To store first matrix A
+            double *A[rows1];
+            for (row = 0; row < rows1; row++)
             {
-                fscanf(file, "%lf,", &matval);
-                A[row][col] = matval;
+                // to dynamically allocate memory
+                A[row] = malloc(cols1 * sizeof(double *));
+                for (col = 0; col < cols1; col++)
+                {
+                    fscanf(file, "%lf,", &matval);
+                    A[row][col] = matval;
+                }
             }
-        }
 
-        // To store second matrix B
-        fscanf(file, "%d,%d", &rows2, &cols2);
-        double *B[rows2];
-        for (row = 0; row < rows2; row++)
-        {
-            B[row] = malloc(cols2 * sizeof(double *));
-            for (col = 0; col < cols2; col++)
+            // To store second matrix B
+            fscanf(file, "%d,%d", &rows2, &cols2);
+            double *B[rows2];
+            for (row = 0; row < rows2; row++)
             {
-                fscanf(file, "%lf,", &matval);
-                B[row][col] = matval;
+                B[row] = malloc(cols2 * sizeof(double *));
+                for (col = 0; col < cols2; col++)
+                {
+                    fscanf(file, "%lf,", &matval);
+                    B[row][col] = matval;
+                }
             }
-        }
 
-        // if matrix cannot be multiplied like 3x3 by 2x2 then break the iteration
-        if (cols1 != rows2)
-        {
-            printf("Matrix A is %dx%d\n", rows1, cols1);
-            printf("Matrix B is %dx%d\n", rows2, cols2);
-            printf("Error Message:: The matrix A and B cannot be multiplied.\n\n");
-            continue;
-        }
+            // if matrix cannot be multiplied like 3x3 by 2x2 then break the iteration
+            if (cols1 != rows2)
+            {
+                printf("Matrix A is %dx%d\n", rows1, cols1);
+                printf("Matrix B is %dx%d\n", rows2, cols2);
+                printf("Error Message:: The matrix A and B cannot be multiplied.\n\n");
+                continue;
+            }
 
-        resultantMatrix(A, B);
+            resultantMatrix(A, B);
+        }
     }
 }
 

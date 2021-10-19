@@ -8,7 +8,7 @@ void main()
     int rows1, cols1, rows2, cols2;
     double matval = 0.0;
 
-    file = fopen("SampleMatricesWithErrors.txt", "r");
+    file = fopen("../Data/SampleMatricesWithErrors.txt", "r");
     //file = fopen("new.txt", "r");
     fileStore = fopen("z_matrixresults2049699.txt", "w");
 
