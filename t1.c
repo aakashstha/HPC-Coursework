@@ -151,7 +151,7 @@ void *calculateMatrix(void *arg)
 {
     double *data = (double *)arg;
     double finalValue = 0.0;
-    int index = data[0], z = 0;
+    int index = data[0], z = 0; 
 
     for (z = 1; z <= index; z++)
         finalValue += data[z] * data[z + index];
