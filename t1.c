@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+FILE *file, *fileStore = NULL;
+int row, col; // to use in loops
+int rows1, cols1, rows2, cols2;
+
 void *calculateMatrix(void *arg)
 {
     double *data = (double *)arg;
@@ -18,14 +22,79 @@ void *calculateMatrix(void *arg)
 
     pthread_exit(p);
 }
-
-void main()
+void resultantMatrix(int thread, double **A, double **B)
 {
-    FILE *file, *fileStore = NULL;
-    int row, col; // to use in loops
-    int rows1, cols1, rows2, cols2;
-    double matval = 0.0;
+    int n = 2;
+    pthread_t threads[n];
+    double *data = NULL;
+    int k;
+    int count = 0;
+    int breakCounter = 0;
+    int test = 1; // optional
 
+    // if user requested number greater than the biggest dimension of the matrices
+    if (n > rows1 && n > cols2)
+    {
+        n = rows1 > cols2 ? rows1 : cols2;
+    }
+
+    // To store and perform matrix multiplication
+    fprintf(fileStore, "Resultant Matrix: %d,%d\n", rows1, cols2);
+    double C[rows1][cols2];
+    for (row = 0; row < rows1; row++)
+    {
+
+        for (col = 0; col < cols2; col++)
+        {
+            // storing 1st mat row and 2nd mat column
+            // (cols1 * row2 +1) OR (cols1 * 2 +1) same
+            data = malloc((cols1 * 2 + 1) * sizeof(double));
+            data[0] = cols1;
+
+            for (k = 0; k < cols1; k++)
+            {
+                data[k + 1] = A[row][k];
+            }
+            for (k = 0; k < rows2; k++)
+            {
+                data[k + cols1 + 1] = B[k][col];
+            }
+
+            if (count < n)
+            {
+                pthread_create(&threads[count], NULL, calculateMatrix, (void *)(data));
+                count++;
+            }
+
+            if (count == n || row + col == rows1 + cols2 - 2)
+            {
+                //printf("%d\n", test++);
+                for (int i = 0; i < count; i++)
+                {
+
+                    void *k;
+
+                    pthread_join(threads[i], &k);
+                    double *p = (double *)k;
+                    fprintf(fileStore, "%lf\t", *p);
+
+                    breakCounter++;
+                    if (breakCounter == cols2)
+                    {
+                        fprintf(fileStore, "\n");
+                        breakCounter = 0;
+                    }
+                }
+                count = 0;
+            }
+        }
+    }
+    fprintf(fileStore, "\n");
+}
+
+void readMatrix()
+{
+    double matval = 0.0;
     file = fopen("SampleMatricesWithErrors.txt", "r");
     //file = fopen("z_new.txt", "r");
     fileStore = fopen("z_matrixresults2049699.txt", "w");
@@ -69,72 +138,14 @@ void main()
             continue;
         }
 
-        int n = 2;
-
-        pthread_t threads[n];
-        double *data = NULL;
-        int k;
-        int count = 0;
-        int breakCounter = 0;
-        int test = 1;
-
-        // To store and perform matrix multiplication
-        fprintf(fileStore, "Resultant Matrix: %d,%d\n", rows1, cols2);
-        double C[rows1][cols2];
-        for (row = 0; row < rows1; row++)
-        {
-
-            for (col = 0; col < cols2; col++)
-            {
-                // storing 1st mat row and 2nd mat column
-                // (cols1 * row2 +1) OR (cols1 * 2 +1) same
-                data = malloc((cols1 * 2 + 1) * sizeof(double));
-                data[0] = cols1;
-
-                for (k = 0; k < cols1; k++)
-                {
-                    data[k + 1] = A[row][k];
-                }
-                for (k = 0; k < rows2; k++)
-                {
-                    data[k + cols1 + 1] = B[k][col];
-                }
-
-                if (count < n)
-                {
-                    pthread_create(&threads[count], NULL, calculateMatrix, (void *)(data));
-                    count++;
-                }
-
-                // || col == cols2 - 1
-                // || row == rows1 - 1
-                // row + col == rows1 + cols2 - 2
-
-                if (count == n || row + col == rows1 + cols2 - 2)
-                {
-                    printf("%d\n", test++);
-                    for (int i = 0; i < count; i++)
-                    {
-
-                        void *k;
-
-                        pthread_join(threads[i], &k);
-                        double *p = (double *)k;
-                        fprintf(fileStore, "%lf\t", *p);
-
-                        breakCounter++;
-                        if (breakCounter == cols2)
-                        {
-                            fprintf(fileStore, "\n");
-                            breakCounter = 0;
-                        }
-                    }
-                    count = 0;
-                }
-            }
-        }
-        fprintf(fileStore, "\n");
+        resultantMatrix(5, A, B);
     }
+}
+
+void main()
+{
+    readMatrix();
     printf("Done.\n");
     fclose(file);
+    fclose(fileStore);
 }
