@@ -1,104 +1,99 @@
-// C Program to multiply two matrix using pthreads without
-// use of global variables
 #include <stdio.h>
 #include <pthread.h>
-#include <unistd.h>
 #include <stdlib.h>
-#define MAX 4
+#include<crypt.h>
+#include<string.h>
+#define SALT "$6$AS$"
 
-//Each thread computes single element in the resultant matrix
-void *mult(void *arg)
+pthread_mutex_t mutex;
+char salt_with_password[92]="";
+char charArr[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+struct slicingData
 {
-    int *data = (int *)arg;
-    int k = 0, i = 0;
-
-    int x = data[0];
-    for (i = 1; i <= x; i++)
-        k += data[i] * data[i + x];
-
-    int *p = (int *)malloc(sizeof(int));
-    *p = k;
-
-    //Used to terminate a thread and the return value is passed as a pointer
-    pthread_exit(p);
+    char start;
+    char end;
+};
+int check = 0;
+int count = 0; // A counter used to track the number of combinations explored so far
+/**
+ Required by lack of standard function in C.   
+*/
+void substr(char *dest, char *src, int start, int length)
+{
+    memcpy(dest, src + start, length);
+    *(dest + length) = '\0';
 }
-
-//Driver code
-int main()
+void *crack(void *position)
 {
-
-    int matA[MAX][MAX];
-    int matB[MAX][MAX];
-
-    int r1 = MAX, c1 = MAX, r2 = MAX, c2 = MAX, i, j, k;
-
-    // Generating random values in matA
-    for (i = 0; i < r1; i++)
-        for (j = 0; j < c1; j++)
-            matA[i][j] = rand() % 10;
-
-    // Generating random values in matB
-    for (i = 0; i < r1; i++)
-        for (j = 0; j < c1; j++)
-            matB[i][j] = rand() % 10;
-
-    // Displaying matA
-    for (i = 0; i < r1; i++)
+    int x, y, z;   // Loop counters
+    char salt[7];  // String used in hashing the password. Need space for \0 // incase you have modified the salt value, then should modifiy the number accordingly
+    char plain[7]; // The combination of letters currently being checked // Please modifiy the number when you enlarge the encrypted password.
+    char *enc;     // Pointer to the encrypted password
+    struct slicingData pos = *(struct slicingData *)position;
+    // substr(salt, salt_with_password, 0, 6);
+    for (x = charArr[pos.start]; x <= charArr[pos.end]; x++)
     {
-        for (j = 0; j < c1; j++)
-            printf("%d ", matA[i][j]);
-        printf("\n");
-    }
-    printf("\n");
-
-    // Displaying matB
-    for (i = 0; i < r2; i++)
-    {
-        for (j = 0; j < c2; j++)
-            printf("%d ", matB[i][j]);
-        printf("\n");
-    }
-
-    int max = r1 * c2;
-
-    //declaring array of threads of size r1*c2
-    pthread_t *threads;
-    threads = (pthread_t *)malloc(max * sizeof(pthread_t));
-
-    int count = 0;
-    int *data = NULL;
-    for (i = 0; i < r1; i++)
-        for (j = 0; j < c2; j++)
+        for (y = 'A'; y <= 'Z'; y++)
         {
+            for (z = 0; z <= 99; z++)
+            {
+                sprintf(plain, "%c%c%02d", x, y, z);
+                
 
-            //storing row and column elements in data
-            data = (int *)malloc((20) * sizeof(int));
-            data[0] = c1;
+                pthread_mutex_lock(&mutex);
+                if (check ==1) {
+                    pthread_cancel(pthread_self());
+                }
 
-            for (k = 0; k < c1; k++)
-                data[k + 1] = matA[i][k];
+                printf("%s \t %ld\n",plain, pthread_self());
+                enc = (char *)crypt(plain, SALT);
+                count++;
+                if (strcmp(salt_with_password, enc) == 0)
+                {
+                    check = 1;
+                    printf("password found #%-8d%s %s\n", count, plain, enc);
+                    //pthread_exit(NULL);
+                   // return;	//uncomment this line if you want to speed-up the running time, program will find you the cracked password only without exploring all possibilites
+                }
 
-            for (k = 0; k < r2; k++)
-                data[k + c1 + 1] = matB[k][j];
-
-            //creating threads
-            pthread_create(&threads[count++], NULL,
-                           mult, (void *)(data));
+                pthread_mutex_unlock(&mutex);
+            }
         }
-
-    printf("\nRESULTANT MATRIX IS :- \n");
-    for (i = 0; i < max; i++)
-    {
-        void *k;
-
-        //Joining all threads and collecting return value
-        pthread_join(threads[i], &k);
-
-        int *p = (int *)k;
-        printf("%d ", *p);
-        if ((i + 1) % c2 == 0)
-            printf("\n");
     }
-
-    return 0;
 }
+void main(int *argc, char *argv[])
+{
+    pthread_mutex_init(&mutex, NULL);
+    int nThreads = atoi(argv[1]);
+    pthread_t threadId[nThreads];
+    int division = 25 / nThreads;
+    int remainder = 25 % nThreads;
+    int start = 0, end = 0;
+    struct slicingData s[nThreads];
+    char input[92];
+    strcpy(salt_with_password,argv[2]);
+
+    for (int i = 0; i < nThreads; i++)
+    {
+        s[i].start = start;
+        s[i].end = end + division;
+        if (remainder > 0)
+        {
+            s[i].end += 1;
+            remainder--;
+        }
+        start = s[i].end + 1;
+        end = s[i].end;
+    }
+    for (int j = 0; j < nThreads; j++)
+    {
+        pthread_create(&threadId[j], NULL, crack, (void *)&s[j]);
+    }
+    for (int k = 0; k < nThreads; k++)
+    {
+        pthread_join(threadId[k], NULL);
+    }
+}
+
+
+// $6$AS$9IwGTn5WbHSalUs4ba3JbOfOUX/v1yD71Z4M2F6Yusz5k2WQEOFxqLIY80tudGtcFttqr/Zq6RIPjHkl/t2Pp1
