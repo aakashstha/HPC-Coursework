@@ -30,10 +30,12 @@ void main(int argc, char **argv)
 // To read matrix A and B from the file.
 void readMatrix()
 {
-    double matval = 0.0;
-    file = fopen("SampleMatricesWithErrors.txt", "r");
-    fileStore = fopen("z_matrixresults2049699.txt", "w");
 
+    file = fopen("Data/SampleMatricesWithErrors.txt", "r");
+    if (file != NULL)
+        fileStore = fopen("matrixresults2049699.txt", "w");
+
+    double matval = 0.0;
     while (fscanf(file, "%d,%d", &rows1, &cols1) != EOF)
     {
         // To store first matrix A
@@ -86,9 +88,7 @@ void resultantMatrix(double *A[rows1], double *B[rows2])
 
     // if user requested number greater than the biggest dimension of the matrices
     if (nThreads > rows1 && nThreads > cols2)
-    {
         nThreads = rows1 > cols2 ? rows1 : cols2;
-    }
 
     // To store and perform matrix multiplication
     fprintf(fileStore, "Resultant Matrix: %d,%d\n", rows1, cols2);
@@ -104,13 +104,10 @@ void resultantMatrix(double *A[rows1], double *B[rows2])
 
             int k;
             for (k = 0; k < cols1; k++)
-            {
                 data[k + 1] = A[row][k];
-            }
+
             for (k = 0; k < rows2; k++)
-            {
                 data[k + cols1 + 1] = B[k][col];
-            }
 
             if (count < nThreads)
             {
@@ -150,9 +147,7 @@ void *calculateMatrix(void *arg)
     int index = data[0], z = 0;
 
     for (z = 1; z <= index; z++)
-    {
         finalValue += data[z] * data[z + index];
-    }
 
     double *last = malloc(sizeof(double));
     *last = finalValue;
