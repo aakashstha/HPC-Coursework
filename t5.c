@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int row, col;
-void passDoublePointer(int **dPtr)
+void passDoublePointer(int *dPtr[2])
 {
     for (row = 0; row < 2; row++)
     {

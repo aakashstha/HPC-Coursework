@@ -3,107 +3,40 @@
 #include <pthread.h>
 
 FILE *file, *fileStore = NULL;
-int row, col; // to use in loops
-int rows1, cols1, rows2, cols2;
+int row, col;                   // to use in loops
+int rows1, cols1, rows2, cols2; // to store rows and columns of matrix A & B
+int threadCount;
 
-void *calculateMatrix(void *arg)
+// all the available function down below
+void *calculateMatrix(void *arg);
+void resultantMatrix(double *A[rows1], double *B[rows2]);
+void readMatrix();
+
+void main(int argc, char **argv)
 {
-    double *data = (double *)arg;
-    double k = 0;
-    int i = 0;
-
-    int x = data[0];
-    for (i = 1; i <= x; i++)
+    threadCount = atoi(argv[1]);
+    if (threadCount <= 0 || threadCount >= 1000)
     {
-        k += data[i] * data[i + x];
-    }
-    double *p = (double *)malloc(sizeof(double));
-    *p = k;
-
-    pthread_exit(p);
-}
-void resultantMatrix(int thread, double **A, double **B)
-{
-    int n = 2;
-    pthread_t threads[n];
-    double *data = NULL;
-    int k;
-    int count = 0;
-    int breakCounter = 0;
-    int test = 1; // optional
-
-    // if user requested number greater than the biggest dimension of the matrices
-    if (n > rows1 && n > cols2)
-    {
-        n = rows1 > cols2 ? rows1 : cols2;
+        printf("ERROR: You can only set threads between 1 - 999 !!\n\n");
+        return;
     }
 
-    // To store and perform matrix multiplication
-    fprintf(fileStore, "Resultant Matrix: %d,%d\n", rows1, cols2);
-    double C[rows1][cols2];
-    for (row = 0; row < rows1; row++)
-    {
-
-        for (col = 0; col < cols2; col++)
-        {
-            // storing 1st mat row and 2nd mat column
-            // (cols1 * row2 +1) OR (cols1 * 2 +1) same
-            data = malloc((cols1 * 2 + 1) * sizeof(double));
-            data[0] = cols1;
-
-            for (k = 0; k < cols1; k++)
-            {
-                data[k + 1] = A[row][k];
-            }
-            for (k = 0; k < rows2; k++)
-            {
-                data[k + cols1 + 1] = B[k][col];
-            }
-
-            if (count < n)
-            {
-                pthread_create(&threads[count], NULL, calculateMatrix, (void *)(data));
-                count++;
-            }
-
-            if (count == n || row + col == rows1 + cols2 - 2)
-            {
-                //printf("%d\n", test++);
-                for (int i = 0; i < count; i++)
-                {
-
-                    void *k;
-
-                    pthread_join(threads[i], &k);
-                    double *p = (double *)k;
-                    fprintf(fileStore, "%lf\t", *p);
-
-                    breakCounter++;
-                    if (breakCounter == cols2)
-                    {
-                        fprintf(fileStore, "\n");
-                        breakCounter = 0;
-                    }
-                }
-                count = 0;
-            }
-        }
-    }
-    fprintf(fileStore, "\n");
+    readMatrix();
+    printf("Done.\n");
+    fclose(file);
+    fclose(fileStore);
 }
 
+// To read matrix A and B from the file.
 void readMatrix()
 {
     double matval = 0.0;
     file = fopen("SampleMatricesWithErrors.txt", "r");
-    //file = fopen("z_new.txt", "r");
     fileStore = fopen("z_matrixresults2049699.txt", "w");
 
     while (fscanf(file, "%d,%d", &rows1, &cols1) != EOF)
     {
-
         // To store first matrix A
-        // double A[rows1][cols1];
         double *A[rows1];
         for (row = 0; row < rows1; row++)
         {
@@ -138,14 +71,90 @@ void readMatrix()
             continue;
         }
 
-        resultantMatrix(5, A, B);
+        resultantMatrix(A, B);
     }
 }
 
-void main()
+// slicing for threads and perform calculation for resultant matrix
+void resultantMatrix(double *A[rows1], double *B[rows2])
 {
-    readMatrix();
-    printf("Done.\n");
-    fclose(file);
-    fclose(fileStore);
+
+    double *data = NULL;
+    int nThreads = threadCount, count = 0, breakCounter = 0;
+    pthread_t threads[nThreads];
+    int test = 1; // optional
+
+    // if user requested number greater than the biggest dimension of the matrices
+    if (nThreads > rows1 && nThreads > cols2)
+    {
+        nThreads = rows1 > cols2 ? rows1 : cols2;
+    }
+
+    // To store and perform matrix multiplication
+    fprintf(fileStore, "Resultant Matrix: %d,%d\n", rows1, cols2);
+    double C[rows1][cols2];
+    for (row = 0; row < rows1; row++)
+    {
+        for (col = 0; col < cols2; col++)
+        {
+            // storing 1st mat row and 2nd mat column
+            // (cols1 * row2 +1) OR (cols1 * 2 +1) same
+            data = malloc((cols1 * 2 + 1) * sizeof(double));
+            data[0] = cols1;
+
+            int k;
+            for (k = 0; k < cols1; k++)
+            {
+                data[k + 1] = A[row][k];
+            }
+            for (k = 0; k < rows2; k++)
+            {
+                data[k + cols1 + 1] = B[k][col];
+            }
+
+            if (count < nThreads)
+            {
+                pthread_create(&threads[count], NULL, calculateMatrix, (void *)data);
+                count++;
+            }
+
+            if (count == nThreads || row + col == rows1 + cols2 - 2)
+            {
+                //printf("%d\n", test++);
+                for (int i = 0; i < count; i++)
+                {
+                    void *ptr;
+                    pthread_join(threads[i], &ptr);
+                    fprintf(fileStore, "%lf\t", *(double *)ptr);
+
+                    // to break into new line after each column end.
+                    breakCounter++;
+                    if (breakCounter == cols2)
+                    {
+                        fprintf(fileStore, "\n");
+                        breakCounter = 0;
+                    }
+                }
+                count = 0;
+            }
+        }
+    }
+    fprintf(fileStore, "\n");
+}
+
+// using thread for matrix multiplication
+void *calculateMatrix(void *arg)
+{
+    double *data = (double *)arg;
+    double finalValue = 0.0;
+    int index = data[0], z = 0;
+
+    for (z = 1; z <= index; z++)
+    {
+        finalValue += data[z] * data[z + index];
+    }
+
+    double *last = malloc(sizeof(double));
+    *last = finalValue;
+    pthread_exit(last);
 }
