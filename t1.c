@@ -3,7 +3,7 @@
 #include <pthread.h>
 
 FILE *file, *fileStore = NULL;
-int row, col;                   // to use in loops
+int row, col;                   // to use in loop counters
 int rows1, cols1, rows2, cols2; // to store rows and columns of matrix A & B
 int threadCount;
 char *filename[5] = {
@@ -15,9 +15,9 @@ char *filename[5] = {
 };
 
 // all the available function down below
+void readMatrix();
 void *calculateMatrix(void *arg);
 void resultantMatrix(double *A[rows1], double *B[rows2]);
-void readMatrix();
 
 void main(int argc, char **argv)
 {
@@ -151,7 +151,7 @@ void *calculateMatrix(void *arg)
 {
     double *data = (double *)arg;
     double finalValue = 0.0;
-    int index = data[0], z = 0; 
+    int index = data[0], z = 0;
 
     for (z = 1; z <= index; z++)
         finalValue += data[z] * data[z + index];
