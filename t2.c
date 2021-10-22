@@ -35,6 +35,7 @@ void *crack(void *alphabetValue)
     struct AlphabetVariables *value = (struct AlphabetVariables *)alphabetValue;
     char startLimit = value->start+65, endLimit = value->end+65;
 
+    printf("%d %d \n", startLimit,endLimit);
     substr(salt, encrypted_password, 0, 6);
     for (x = startLimit; x <= endLimit; x++)
     {
@@ -92,8 +93,8 @@ void slicing()
         mainStruct[i].start = startList[i];
         mainStruct[i].end = endList[i];
     }
-    // for (i = 0; i < threadCount; i++)
-    //     printf("%d %d \n",mainStruct[i].start, mainStruct[i].end);
+    for (i = 0; i < threadCount; i++)
+        printf("%d %d \n",mainStruct[i].start, mainStruct[i].end);
 
     pthread_t thread[threadCount];
     for (i = 0; i < threadCount; i++)
