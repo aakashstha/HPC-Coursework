@@ -1,6 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+/*
+    While running this task-1 programme you have to pass how many number 
+    of threads you want to create here if you donot specify any number
+    then the programe will throw "segmentation fault  ./xyz" like this.
+    
+    Example:-
+     To Compile = gcc task1.c -o xyz -pthread
+     To Run = ./xyz 3
+              ./xyz 7
+              ./xyz 4 (accordingly)
+*/
 
 FILE *file, *fileStore = NULL;
 int row, col;                   // to use in loop counters

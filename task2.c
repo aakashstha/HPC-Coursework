@@ -8,7 +8,7 @@
     While running this task-2 programme you have to pass how many number 
     of threads you want to create and along with encrypted password. If you donot 
     specify like this then the programe will throw "Segmentation fault (core dumped)" error.
-
+    
     Example:-
         To Compile = gcc t2.c -o xyz -pthread -lcrypt
         To Run = ./xyz [numbers_of_threads] [encrypted_password] 
