@@ -39,9 +39,10 @@ void slicing();
 void *crack(void *alphabetValue);
 void substr(char *dest, char *src, int start, int length);
 
-int main(int argc, char **argv)
+
+void main(int argc, char **argv)
 {
-    // In argument array index 1st how many thread to run
+    // In argument array index 1st how many thread to run 
     // and in 2nd encrypted password of main function.
     threadCount = atoi(argv[1]);
     strcpy(encrypted_password, argv[2]);
@@ -50,7 +51,6 @@ int main(int argc, char **argv)
 
     printf("%d solutions explored\n", count);
     pthread_mutex_destroy(&mutex);
-    return 0;
 }
 
 void slicing()
@@ -92,7 +92,6 @@ void slicing()
 
 void *crack(void *alphabetValue)
 {
-
     int x, y, z;
     char salt[7];
     char plain[7];
@@ -108,14 +107,14 @@ void *crack(void *alphabetValue)
         {
             for (z = 0; z <= 99; z++)
             {
-                if (check == 1)
+                if (check)
                 {
                     pthread_exit(NULL);
                 }
                 sprintf(plain, "%c%c%02d", x, y, z);
 
                 pthread_mutex_lock(&mutex);
-                
+
                 count++;
                 enc = (char *)crypt(plain, salt);
                 if (strcmp(encrypted_password, enc) == 0)
