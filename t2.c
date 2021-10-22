@@ -1,107 +1,115 @@
 #include <stdio.h>
-#include <pthread.h>
+#include <string.h>
 #include <stdlib.h>
-#include<crypt.h>
-#include<string.h>
-#define SALT "$6$AS$"
+#include <crypt.h>
+#include <unistd.h>
+#include <pthread.h>
 
-pthread_mutex_t mutex;
-char salt_with_password[92]="";
-char charArr[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-struct slicingData
-{
-    char start;
-    char end;
-};
-int check = 0;
 int count = 0; // A counter used to track the number of combinations explored so far
-/**
- Required by lack of standard function in C.   
-*/
+pthread_mutex_t mutex;
+char encrypted_password[92]="";
+int threadCount;
+int check = 0;
+int i,n=26;
+
+struct AlphabetVariables
+{
+    int start;
+    int end;
+};
+
 void substr(char *dest, char *src, int start, int length)
 {
     memcpy(dest, src + start, length);
     *(dest + length) = '\0';
 }
-void *crack(void *position)
+
+void *crack(void *alphabetValue)
 {
-    
+
     int x, y, z;   // Loop counters
     char salt[7];  // String used in hashing the password. Need space for \0 // incase you have modified the salt value, then should modifiy the number accordingly
     char plain[7]; // The combination of letters currently being checked // Please modifiy the number when you enlarge the encrypted password.
     char *enc;     // Pointer to the encrypted password
-    struct slicingData pos = *(struct slicingData *)position;
-    substr(salt, salt_with_password, 0, 6);
-    for (x = charArr[pos.start]; x <= charArr[pos.end]; x++)
+
+    struct AlphabetVariables *value = (struct AlphabetVariables *)alphabetValue;
+    char startLimit = value->start+65, endLimit = value->end+65;
+
+    substr(salt, encrypted_password, 0, 6);
+    for (x = startLimit; x <= endLimit; x++)
     {
-        
         for (y = 'A'; y <= 'Z'; y++)
         {
             for (z = 0; z <= 99; z++)
             {
-                sprintf(plain, "%c%c%02d", x, y, z);
-                
-
-                if (check == 1) {
+                if (check == 1)
+                {
                     pthread_exit(NULL);
                 }
-            
-               
-                printf("%s \t %ld\n",plain, pthread_self());
+                sprintf(plain, "%c%c%02d", x, y, z);
+               // printf("%c%c%d %ld \n", x, y, z, pthread_self());
+
 
                 pthread_mutex_lock(&mutex);
-
-                enc = (char *)crypt(plain, SALT);
+                enc = (char *)crypt(plain, salt);
                 count++;
-                if (strcmp(salt_with_password, enc) == 0)
-                {
-                    
-                    printf("password found #%-8d%s %s\n", count, plain, enc);
-                    check = 1;
-                    //return 0;
-                   // pthread_exit(NULL);
-                   // return;	//uncomment this line if you want to speed-up the running time, program will find you the cracked password only without exploring all possibilites
-                }
 
+                if (strcmp(encrypted_password, enc) == 0)
+                {
+                    printf("#%-8d%s %s\n", count, plain, enc);
+                    check = 1;
+                }
                 pthread_mutex_unlock(&mutex);
             }
         }
     }
-    
 }
-void main(int *argc, char *argv[])
-{
-    pthread_mutex_init(&mutex, NULL);
-    int nThreads = atoi(argv[1]);
-    pthread_t threadId[nThreads];
-    int division = 25 / nThreads;
-    int remainder = 25 % nThreads;
-    int start = 0, end = 0;
-    struct slicingData s[nThreads];
-    char input[92];
-    strcpy(salt_with_password,argv[2]);
 
-    for (int i = 0; i < nThreads; i++)
+void slicing()
+{
+    int sliceList[threadCount],
+        remainder = n % threadCount,
+        startList[threadCount],
+        endList[threadCount];
+    struct AlphabetVariables mainStruct[threadCount];
+
+    for (i = 0; i < threadCount; i++)
     {
-        s[i].start = start;
-        s[i].end = end + division;
-        if (remainder > 0)
-        {
-            s[i].end += 1;
+        sliceList[i] = n / threadCount;
+        if (remainder > 0) {
+            sliceList[i] += 1;
             remainder--;
         }
-        start = s[i].end + 1;
-        end = s[i].end;
+
+        if (i == 0)
+            startList[i] = 0;
+        else
+            startList[i] = endList[i - 1] + 1;
+
+        endList[i] = startList[i] + sliceList[i] - 1;
+
+        // Assign to Structure
+        mainStruct[i].start = startList[i];
+        mainStruct[i].end = endList[i];
     }
-    for (int j = 0; j < nThreads; j++)
-    {
-        pthread_create(&threadId[j], NULL, crack, (void *)&s[j]);
-    }
-    for (int k = 0; k < nThreads; k++)
-    {
-        pthread_join(threadId[k], NULL);
-    }
+    // for (i = 0; i < threadCount; i++)
+    //     printf("%d %d \n",mainStruct[i].start, mainStruct[i].end);
+
+    pthread_t thread[threadCount];
+    for (i = 0; i < threadCount; i++)
+        pthread_create(&thread[i], NULL, crack, &mainStruct[i]);
+
+    for (i = 0; i < threadCount; i++)
+        pthread_join(thread[i], NULL);
 }
 
-
-// AA11 = \$6\$AS\$9IwGTn5WbHSalUs4ba3JbOfOUX/v1yD71Z4M2F6Yusz5k2WQEOFxqLIY80tudGtcFttqr/Zq6RIPjHkl/t2Pp1
+int main(int argc, char *argv[])
+{
+   threadCount = atoi(argv[1]);
+    strcpy(encrypted_password,argv[2]);
+    pthread_mutex_init(&mutex, NULL);
+    slicing();
+    
+    printf("%d solutions explored\n", count);
+    return 0;
+}
