@@ -34,7 +34,7 @@ void main(int argc, char **argv)
     fclose(fileStore);
 }
 
-// To read matrix A and B from the file.
+// To read all the matrix A and B from the file.
 void readMatrix()
 {
     fileStore = fopen("matrixresults2049699.txt", "w");
