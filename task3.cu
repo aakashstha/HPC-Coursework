@@ -1,19 +1,22 @@
-%%cu
+% % cu
 #include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime_api.h>
 
-		//__global__ --> GPU function which can be launched by many blocks and threads
-		//__device__ --> GPU function or variables
-		//__host__ --> CPU function or variables
-
 		/*
-	A Z 0 0 = CCBDWY2244
-	M W 2 3 = OKNZTV4071
-	P O 8 8 = RNQRLN1634
-	Z Z 9 9 = CXBDWY2745
-	*/
+	__global__ --> GPU function which can be launched by many blocks and threads
+	__device__ --> GPU function or variables
+	__host__ --> CPU function or variables
 
+
+	## some of the encrypted password you can try!
+	// AZ00 = CCBDWY2244
+	// MW23 = OKNZTV4071
+	// PO88 = RNQRLN1634
+	// ZZ99 = CXBDWY2745
+*/
+
+		// To Encrypt All the Characters and Numbers
 		__device__ char *
 		CudaCrypt(char *rawPassword)
 {
@@ -59,21 +62,19 @@
 	return newPassword;
 }
 
-__device__ int compareTwoEncryption(char *first, char *second)
+// To check all the encrypted password match with each other or not
+__device__ int compareTwoEncryption(char *encrypted, char *generated)
 {
 	for (int i = 0; i < 10; i++)
 	{
-		if (first[i] != second[i])
-		{
+		if (encrypted[i] != generated[i])
 			return 0;
-		}
 	}
 	return 1;
 }
 
 __global__ void crack(char *alphabet, char *numbers, char *encrypted_password)
 {
-
 	char genRawPass[4];
 
 	genRawPass[0] = alphabet[blockIdx.x];
@@ -83,15 +84,15 @@ __global__ void crack(char *alphabet, char *numbers, char *encrypted_password)
 	genRawPass[3] = numbers[threadIdx.y];
 
 	char *generateEncryptPassword = CudaCrypt(genRawPass);
-
-	int flag = compareTwoEncryption(generateEncryptPassword, encrypted_password);
+	int flag = compareTwoEncryption(encrypted_password, generateEncryptPassword);
 	if (flag)
 	{
+		encrypted_password[0] = genRawPass[0];
+		encrypted_password[1] = genRawPass[1];
+
+		encrypted_password[2] = genRawPass[2];
+		encrypted_password[3] = genRawPass[3];
 		printf("Password Cracked %s encryption was %s\n", genRawPass, encrypted_password);
-	}
-	else
-	{
-		printf("Password not cracked %s encryption was %s\n", genRawPass, encrypted_password);
 	}
 
 	//printf("%c %c %c %c = %s\n", genRawPass[0], genRawPass[1], genRawPass[2], genRawPass[3], CudaCrypt(genRawPass));
@@ -99,23 +100,32 @@ __global__ void crack(char *alphabet, char *numbers, char *encrypted_password)
 
 int main(int argc, char **argv)
 {
-	char cpuEncrypted_password[10] = "CCBDWY2244";
-	char *gpuEncrypted_password;
 	char cpuAlphabet[26] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
 	char cpuNumbers[26] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
-	char *gpuAlphabet;
+	char *gpuAlphabet, *gpuNumbers;
+	char encrypted_password[11] = "CCBDWY2244";
+	char *encrypted_password2;
+	char *gpuEncrypted_password;
+
 	cudaMalloc((void **)&gpuAlphabet, sizeof(char) * 26);
-	cudaMalloc((void **)&gpuEncrypted_password, sizeof(cpuEncrypted_password));
+	cudaMalloc((void **)&gpuNumbers, sizeof(char) * 26);
+	cudaMalloc((void **)&gpuEncrypted_password, sizeof(char) * 11);
 
 	cudaMemcpy(gpuAlphabet, cpuAlphabet, sizeof(char) * 26, cudaMemcpyHostToDevice);
-	cudaMemcpy(gpuEncrypted_password, cpuEncrypted_password, sizeof(cpuEncrypted_password), cudaMemcpyHostToDevice);
-
-	char *gpuNumbers;
-	cudaMalloc((void **)&gpuNumbers, sizeof(char) * 26);
 	cudaMemcpy(gpuNumbers, cpuNumbers, sizeof(char) * 26, cudaMemcpyHostToDevice);
+	cudaMemcpy(gpuEncrypted_password, encrypted_password, sizeof(char) * 11, cudaMemcpyHostToDevice);
 
-	crack<<<dim3(26, 26, 1), dim3(10, 10, 1)>>>(gpuAlphabet, gpuNumbers, gpuEncrypted_password);
+	crack<<<dim3(26, 26, 1), dim3(10, 10, 1)> > >(gpuAlphabet, gpuNumbers, gpuEncrypted_password);
 	cudaThreadSynchronize();
+
+	//cudaMemcpy(encrypted_password2, gpuEncrypted_password, sizeof(char) * 11, cudaMemcpyDeviceToHost);
+
+	cudaFree(gpuAlphabet);
+	cudaFree(gpuNumbers);
+	cudaFree(gpuEncrypted_password);
+
+	//printf("%s \n", encrypted_password2);
+
 	return 0;
 }
