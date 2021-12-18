@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 
 	char *gpuAlphabet, *gpuNumbers;
 	char encrypted_password[11] = "CCBDWY2244";
-	//char *encrypted_password2;
+	char *encrypted_password2;
 	char *gpuEncrypted_password;
 
 	cudaMalloc((void **)&gpuAlphabet, sizeof(char) * 26);
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 	cudaMemcpy(gpuEncrypted_password, encrypted_password, sizeof(char) * 11, cudaMemcpyHostToDevice);
 
 	crack<<<dim3(26, 26, 1), dim3(10, 10, 1)>>>(gpuAlphabet, gpuNumbers, gpuEncrypted_password);
-	cudaDeviceSynchronize();
+	cudaThreadSynchronize();
 
 	//cudaMemcpy(encrypted_password2, gpuEncrypted_password, sizeof(char) * 11, cudaMemcpyDeviceToHost);
 
