@@ -51,6 +51,7 @@ void processImage()
     int full = row * height;
     for (i = 0; i < row * height; i += 4)
     {
+        printf("Hello!! ===== %d\n", i);
         // 4 corner pixel
         if (i == 0)
         {

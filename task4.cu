@@ -5,16 +5,12 @@
 
 #include "lodepng.h"
 
-//iunsigned char *ImageIn, *ImageOut;
-//unsigned int width, height, error;
-
 /*
     Example:-
      To Compile = nvcc task4.cu -o xyz lodepng.cpp
      To Run = ./xyz
-
-
 */
+
 __device__ void RGB_SumDivide(int j, int d, unsigned char *gpu_imageOuput, unsigned char *gpu_imageInput, int r1, int r2, int r3, int r4, int r5, int r6, int r7, int r8, int r9)
 {
 	unsigned int r = 0, g = 0, b = 0, t = 0;
@@ -44,14 +40,26 @@ __device__ void RGB_SumDivide(int j, int d, unsigned char *gpu_imageOuput, unsig
 	gpu_imageOuput[j + 3] = t;
 }
 
-__device__ void processImage(int width, int height, unsigned char *gpu_imageOuput, unsigned char *gpu_imageInput)
+__device__ void processImage(int width, int height, unsigned char *gpu_imageOuput, unsigned char *gpu_imageInput, int pixel)
 {
-	int i;
-	int row = 4 * width;
-	int full = row * height;
+
+	
+}
+
+__global__ void square(unsigned char *gpu_imageOuput, unsigned char *gpu_imageInput, int width, int height)
+{
+
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+
+	int pixel = idx*4;
+
+
+	int i=pixel;
+	int row = 4 * blockDim.x;
+	int full = row * gridDim.x;
+
 	unsigned int r1 = 0, r2 = 0, r3 = 0, r4 = 0, r5 = 0, r6 = 0, r7 = 0, r8 = 0, r9 = 0;
-	for (i = 0; i < row * height; i += 4)
-	{
+
 		// 4 corner pixel
 		if (i == 0)
 		{
@@ -99,20 +107,12 @@ __device__ void processImage(int width, int height, unsigned char *gpu_imageOupu
 			r1 = i - row + 4, r2 = i + 4 - row + 4, r3 = i + 4 + 4 - row + 4, r4 = i - 4, r5 = i, r6 = i + 4, r7 = i + row - 4, r8 = i + row, r9 = i + row + 4;
 			RGB_SumDivide(i, 9, gpu_imageOuput, gpu_imageInput, r1, r2, r3, r4, r5, r6, r7, r8, r9);
 		}
-		//printf("%d %d %d %d\n", ImageIn[i], ImageIn[i + 1], ImageIn[i + 2], ImageIn[i + 3]);
-	}
+
+	//processImage(width, height, gpu_imageOuput, gpu_imageInput, pixel);
 }
 
-__global__ void square(unsigned char *gpu_imageOuput, unsigned char *gpu_imageInput, int width, int height)
-{
+int main(int argc, char **argv) 
 
-	//int idx = blockDim.x * blockIdx.x + threadIdx.x;
-
-	//int pixel = idx*4;
-	processImage(width, height, gpu_imageOuput, gpu_imageInput);
-}
-
-int main(int argc, char **argv)
 {
 
 	unsigned int error;
