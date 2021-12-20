@@ -9,7 +9,7 @@
 	__host__ --> CPU function or variables
 -----------------------------------------------------------------------------------------------------
 
-	While running this task3 on Google Colab just uncomment the first statement written %%cu
+	While running this task-3 on Google Colab just uncomment the first statement written %%cu
 	and it will run perfectly fine.
 
 	Example:-
@@ -62,11 +62,13 @@ int main(int argc, char **argv)
 	cudaFree(gpuEncrypted_password);
 	cudaFree(gpuCrack_password);
 
+	// Print password on CPU after cracking it on GPU.
 	printf("\nPASSWORD CRACKED!!\nReceived encryption was %s.\nYour password is = %s\n", encrypted_password, cpuCracked_password);
 
 	return 0;
 }
 
+// Main kernel function
 __global__ void crack(char *alphabet, char *numbers, char *encrypted_password, char *crack_password)
 {
 	char genRawPass[4];

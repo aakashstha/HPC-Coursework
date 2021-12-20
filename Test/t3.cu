@@ -1,4 +1,4 @@
-// To run on Google Colab
+// Task 3 to run on Google Colab
 %%cu
 #include <stdio.h>
 #include <stdlib.h>
